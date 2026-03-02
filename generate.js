@@ -1,24 +1,39 @@
 const fs = require('fs');
-
-const departments = ['IT', 'Design', 'Sales', 'Management', 'HR'];
-const names = ['Иван Иванов', 'Анна Сидорова', 'Петр Петров', 'Елена Кузнецова', 'Алексей Смирнов', 'Мария Резник'];
+const { faker } = require('@faker-js/faker'); // Используем стандартный (English) импорт
 
 const generateData = () => {
   const employees = [];
+  // Названия отделов на английском
+  const departments = ['Engineering', 'Product', 'Marketing', 'Sales', 'Operations', 'Finance'];
 
-  for (let i = 1; i <= 40; i++) {
-    // Генерируем случайную дату рождения (от 1970 до 2005)
-    const year = Math.floor(Math.random() * (2005 - 1970 + 1)) + 1970;
-    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+  for (let i = 1; i <= 100; i++) {
+    // 1. Определяем пол
+    const sex = faker.person.sexType(); 
     
+    // 2. Генерируем ФИО (теперь English по умолчанию)
+    const firstName = faker.person.firstName(sex);
+    const lastName = faker.person.lastName();
+    const fullName = `${firstName} ${lastName}`;
+
+    // 3. Дата рождения (те же 20-60 лет)
+    const birthDate = faker.date.birthdate({ min: 20, max: 60, mode: 'age' })
+      .toISOString()
+      .split('T')[0];
+
+    // 4. Зарплаты в долларах (например, от $4,000 до $15,000 в месяц)
+    const salary = faker.number.int({ min: 4000, max: 15000 });
+
+    // 5. Аватары (используем качественный сервис randomuser.me)
+    const genderId = sex === 'male' ? 'men' : 'women';
+    const avatar = `https://randomuser.me/api/portraits/${genderId}/${i}.jpg`;
+
     employees.push({
       id: i.toString(),
-      fullName: names[Math.floor(Math.random() * names.length)],
-      salary: Math.floor(Math.random() * (200000 - 50000 + 1)) + 50000,
-      birthDate: `${year}-${month}-${day}`, // Формат YYYY-MM-DD
-      department: departments[Math.floor(Math.random() * departments.length)],
-      avatar: `https://i.pravatar.cc/150?u=${i}` // Случайная аватарка
+      fullName: fullName,
+      salary: salary,
+      birthDate: birthDate,
+      department: faker.helpers.arrayElement(departments),
+      avatar: avatar
     });
   }
 
@@ -26,5 +41,10 @@ const generateData = () => {
 };
 
 const data = generateData();
-fs.writeFileSync('db.json', JSON.stringify(data, null, 2));
-console.log('✅ db.json создан с 40 сотрудниками!');
+
+try {
+  fs.writeFileSync('db.json', JSON.stringify(data, null, 2));
+  console.log('🌎 Database updated! Generated 50 English profiles with USD salaries.');
+} catch (err) {
+  console.error('Error writing file:', err);
+}
