@@ -1,41 +1,34 @@
 const { faker } = require('@faker-js/faker');
+const fs = require('fs');
 
-function createRandomEmployees(count) {
+const createRandomEmployees = (count = 100) => {
   const employees = [];
-  const departments = ["QA", "Development", "Audit", "Accounting", "Management"];
-
+  
   for (let i = 1; i <= count; i++) {
-    const gender = faker.person.sexType(); 
-    const fullName = faker.person.fullName({ sex: gender });
-
-    const birthDate = faker.date.birthdate({ min: 20, max: 75, mode: 'age' })
-      .toISOString()
-      .split('T')[0];
-
+    // выбираем пол
+    const sex = faker.person.sexType(); // 'male' или 'female'
+    const folder = sex === 'male' ? 'men' : 'women';
     
-    const rawSalary = faker.number.int({ min: 5000, max: 50000 });
-    const salary = Math.floor(rawSalary / 100) * 100;
-
-    const genderId = gender === 'male' ? 'men' : 'women';
-
-    const photoId = i; 
-    const avatar = `https://randomuser.me/api/portraits/${genderId}/${photoId}.jpg`;
+    // Генерируем имя согласно полу
+    const firstName = faker.person.firstName(sex);
+    const lastName = faker.person.lastName(sex);
+    
+    // индекс для фото (0-99)
+    const photoId = i % 100;
 
     employees.push({
       id: i.toString(),
-      fullName: fullName,
-      salary: salary,
-      birthDate: birthDate,
-      department: faker.helpers.arrayElement(departments),
-      avatar: avatar
+      fullName: `${firstName} ${lastName}`,
+      salary: Math.round(faker.number.int({ min: 5000, max: 50000 }) / 100) * 100,
+      birthDate: faker.date.birthdate({ min: 20, max: 75, mode: 'age' }).toISOString().split('T')[0],
+      department: faker.helpers.arrayElement(["QA", "Development", "Audit", "Accounting", "Management"]),
+      avatar: `https://randomuser.me/api/portraits/${folder}/${photoId}.jpg`
     });
   }
 
-  return employees;
-}
-
-const jsonRes = {
-  "employees": createRandomEmployees(100)
+  return { employees };
 };
 
-console.log(JSON.stringify(jsonRes, null, 2));
+const data = createRandomEmployees(100);
+fs.writeFileSync('db.json', JSON.stringify(data, null, 2));
+console.log("✅ База обновлена: пол соответствует аватару!");
